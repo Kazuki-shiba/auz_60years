@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ホール チケット販売状況ビジュアライザー</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 8px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+        .input-section {
+            margin-bottom: 10px;
+            background: #fafafa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e1e8ed;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #219653;
+        }
+        .screen {
+            background-color: #bdc3c7;
+            color: #2c3e50;
+            text-align: center;
+            padding: 5px;
+            font-weight: bold;
+            margin: 8px 0;
+            border-radius: 4px;
+            letter-spacing: 6px;
+            font-size: 12px;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+        .section-title {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 3px;
+            font-weight: bold;
+            font-size: 13px;
+            margin: 10px 0 5px 0;
+            border-radius: 3px;
+        }
+        .hall-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            align-items: center;
+        }
+        .row-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .aisle-label {
+            width: 22px;
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 11px;
+            background-color: #eef2f3;
+            border-radius: 2px;
+            user-select: none;
+        }
+        .block {
+            display: flex;
+            gap: 2px;
+        }
+        .horizontal-aisle {
+            height: 12px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background-color: #ecf0f1;
+            width: 100%;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2px 0;
+        }
+        .seat {
+            width: 23px;
+            height: 23px;
+            background-color: #2ecc71; /* デフォルト空席：緑 */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            font-size: 8px;
+            font-weight: bold;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        
+        /* 各団体の空席カラー */
+        .seat.group-aramaza { background-color: #9b59b6 !important; } /* 荒馬座：紫 */
+        .seat.group-wakakoma { background-color: #2ecc71 !important; } /* 若駒：緑 */
+        .seat.group-tanpopo  { background-color: #e67e22 !important; } /* たんぽぽ：オレンジ */
+        .seat.group-hanadaiko{ background-color: #ff69b4 !important; } /* 花太鼓：ピンク */
+        .seat.group-hall     { background-color: #3498db !important; } /* ホール用：青 */
+
+        /* 予約済みの場合は強制的に黒色 */
+        .seat.reserved {
+            background-color: #000000 !important; 
+        }
+        .seat.hidden-space {
+            background-color: transparent;
+            box-shadow: none;
+            color: transparent;
+            pointer-events: none;
+        }
+        .balcony {
+            background-color: #95a5a6;
+            color: #fff;
+            width: 38px;
+            height: 23px;
+            font-size: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .balcony-space {
+            width: 38px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>チケット販売状況ビジュアライザー</h1>
+
+    <div class="input-section">
+        <div>
+            <strong>スプレッドシート連動モード</strong>
+            <p style="font-size: 11px; color: #666; margin: 2px 0 0 0;">「座席埋まり状況」シートから最新情報を取得します。</p>
+        </div>
+        <button onclick="confirmAndFetch()">🔄 最新データを取得する</button>
+    </div>
+
+    <div class="screen">【 ス ク リ ー ン ・ ス テ ー ジ 方 向 】</div>
+
+    <!-- 凡例にカウンターを追加 -->
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background-color: #9b59b6;"></div><span>荒馬座 (<span id="count-aramaza">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #2ecc71;"></div><span>若駒 (<span id="count-wakakoma">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #e67e22;"></div><span>たんぽぽ (<span id="count-tanpopo">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #ff69b4;"></div><span>花太鼓 (<span id="count-hanadaiko">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #3498db;"></div><span>ホール用 (<span id="count-hall">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #000000;"></div><span>予約済</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #95a5a6;"></div><span>出演者席（対象外）</span></div>
+    </div>
+
+    <div class="section-title">1 階 席</div>
+    <div id="layout-1f" class="hall-layout"></div>
+
+    <div class="section-title">2 階 席</div>
+    <div id="layout-2f" class="hall-layout"></div>
+</div>
+
+<script>
+    // ★ここにウェブアプリのURLを貼り付けてください
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz7KDFGwu5VU66Yrk-4y90H_rrd5gWuuIB_C7ELY7jpp8SVBlBarM1stCoyHQHwvplKuw/exec';
+
+    const rows1F = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
+    const balconyRows1F = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'];
+
+    function get1FRange(row) {
+        if (row === 'A') return { left: [3, 6], center: [7, 22], right: [23, 26] };
+        if (row === 'B') return { left: [2, 6], center: [7, 22], right: [23, 27] };
+        if (row === 'S') return { left: [4, 6], center: [7, 22], right: [23, 25] };
+        if (row === 'T') return { left: [1, 7], center: [8, 21], right: [22, 28] };
+        return { left: [1, 6], center: [7, 22], right: [23, 28] };
+    }
+
+    const rows2F = ['A', 'B', 'C', 'D'];
+
+    function get2FRange(row) {
+        if (row === 'A') return { left: [1, 7], center: [8, 23], right: [24, 30] };
+        if (row === 'B') return { left: [1, 7], center: [8, 23], right: [24, 30] };
+        if (row === 'C') return { left: [3, 7], center: [8, 23], right: [24, 28] };
+        if (row === 'D') return { left: [1, 7], center: [8, 23], right: [24, 30] };
+        return { left: [1, 7], center: [8, 23], right: [24, 30] };
+    }
+
+    function renderLayout() {
+        const container1F = document.getElementById('layout-1f');
+        container1F.innerHTML = '';
+        rows1F.forEach((row) => {
+            if (row === 'M') {
+                const hAisle = document.createElement('div');
+                hAisle.className = 'horizontal-aisle';
+                hAisle.textContent = '━━━ 横 通 路 ━━━';
+                container1F.appendChild(hAisle);
+            }
+            const hasBalcony = balconyRows1F.includes(row);
+            container1F.appendChild(createRowElement('1F', row, get1FRange(row), hasBalcony));
+        });
+
+        const container2F = document.getElementById('layout-2f');
+        container2F.innerHTML = '';
+        rows2F.forEach((row) => {
+            container2F.appendChild(createRowElement('2F', row, get2FRange(row), false));
+        });
+    }
+
+    function createRowElement(floor, rowName, range, hasBalcony) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row-group';
+
+        if (floor === '1F') {
+            const leftBalcony = document.createElement('div');
+            if (hasBalcony) {
+                leftBalcony.className = 'balcony';
+                leftBalcony.textContent = '出演者';
+            } else {
+                leftBalcony.className = 'balcony-space';
+            }
+            rowDiv.appendChild(leftBalcony);
+        }
+
+        const leftBlock = document.createElement('div');
+        leftBlock.className = 'block';
+        appendSeats(leftBlock, floor, rowName, range.left, 'left');
+        rowDiv.appendChild(leftBlock);
+
+        const aisle1 = document.createElement('div');
+        aisle1.className = 'aisle-label';
+        aisle1.textContent = rowName;
+        rowDiv.appendChild(aisle1);
+
+        const centerBlock = document.createElement('div');
+        centerBlock.className = 'block';
+        appendSeats(centerBlock, floor, rowName, range.center, 'center');
+        rowDiv.appendChild(centerBlock);
+
+        const aisle2 = document.createElement('div');
+        aisle2.className = 'aisle-label';
+        aisle2.textContent = rowName;
+        rowDiv.appendChild(aisle2);
+
+        const rightBlock = document.createElement('div');
+        rightBlock.className = 'block';
+        appendSeats(rightBlock, floor, rowName, range.right, 'right');
+        rowDiv.appendChild(rightBlock);
+
+        if (floor === '1F') {
+            const rightBalcony = document.createElement('div');
+            if (hasBalcony) {
+                rightBalcony.className = 'balcony';
+                rightBalcony.textContent = '出演者';
+            } else {
+                rightBalcony.className = 'balcony-space';
+            }
+            rowDiv.appendChild(rightBalcony);
+        }
+
+        return rowDiv;
+    }
+
+    function appendSeats(parentContainer, floor, rowName, rangeDef, blockType) {
+        const start = rangeDef[0];
+        const end = rangeDef[1];
+        for (let i = start; i <= end; i++) {
+            const seatId = `${floor}-${rowName}${i}`;
+            const seat = document.createElement('div');
+            
+            let isHidden = false;
+            if (floor === '1F' && rowName === 'T' && (i < 8 || i > 21)) {
+                isHidden = true;
+            }
+            if (floor === '2F' && rowName === 'D' && (i < 8 || i > 23)) {
+                isHidden = true;
+            }
+
+            if (isHidden) {
+                seat.className = 'seat hidden-space';
+            } else {
+                seat.className = 'seat';
+                seat.id = `seat-${seatId}`;
+                seat.textContent = i;
+            }
+            parentContainer.appendChild(seat);
+        }
+    }
+
+    function confirmAndFetch() {
+        if (confirm("スプレッドシートから最新の予約状況を取得しますか？")) {
+            fetchSheetData();
+        }
+    }
+
+    async function fetchSheetData() {
+        if (!GAS_URL || GAS_URL.includes('ここにあなた')) {
+            alert('HTMLファイル内の GAS_URL に正しいウェブアプリのURLを設定してください。');
+            return;
+        }
+
+        try {
+            resetAllSeats();
+            const response = await fetch(GAS_URL);
+            const resJson = await response.json();
+
+            // 新形式（seats と summary を持つオブジェクト）または旧形式（配列）のどちらにも対応
+            const data = Array.isArray(resJson) ? resJson : resJson.seats;
+            const summary = !Array.isArray(resJson) ? resJson.summary : null;
+
+            let updateCount = 0;
+            data.forEach(item => {
+                let seatId = String(item.seatId || '').trim();
+                let group = String(item.group || '').trim();
+                let isReserved = item.isReserved;
+
+                // 万が一 isReserved が送られてこない場合の保険
+                if (isReserved === undefined) {
+                    let status = String(item.status || '').trim();
+                    isReserved = (status.includes('予約') || status.includes('購入') || status.includes('済') || status === '×');
+                }
+
+                const targetSeat = document.getElementById(`seat-${seatId}`);
+                if (targetSeat && !targetSeat.classList.contains('hidden-space')) {
+                    
+                    // 団体名のクラスを付与
+                    if (group === '荒馬座') {
+                        targetSeat.classList.add('group-aramaza');
+                    } else if (group === '若駒') {
+                        targetSeat.classList.add('group-wakakoma');
+                    } else if (group === 'たんぽぽ') {
+                        targetSeat.classList.add('group-tanpopo');
+                    } else if (group === '花太鼓') {
+                        targetSeat.classList.add('group-hanadaiko');
+                    } else if (group === 'ホール用') {
+                        targetSeat.classList.add('group-hall');
+                    }
+
+                    // 予約済みの場合は黒く上書き
+                    if (isReserved) {
+                        targetSeat.classList.add('reserved');
+                    }
+                    updateCount++;
+                }
+            });
+
+            // 凡例のカウント表示を更新（予約済数 / 総数）
+            if (summary) {
+                if (summary['荒馬座']) document.getElementById('count-aramaza').textContent = `${summary['荒馬座'].reserved}/${summary['荒馬座'].total}`;
+                if (summary['若駒']) document.getElementById('count-wakakoma').textContent = `${summary['若駒'].reserved}/${summary['若駒'].total}`;
+                if (summary['たんぽぽ']) document.getElementById('count-tanpopo').textContent = `${summary['たんぽぽ'].reserved}/${summary['たんぽぽ'].total}`;
+                if (summary['花太鼓']) document.getElementById('count-hanadaiko').textContent = `${summary['花太鼓'].reserved}/${summary['花太鼓'].total}`;
+                if (summary['ホール用']) document.getElementById('count-hall').textContent = `${summary['ホール用'].reserved}/${summary['ホール用'].total}`;
+            }
+
+            alert(`最新データを反映しました！（対象座席: ${updateCount}件）`);
+        } catch (error) {
+            console.error("通信エラー:", error);
+            alert('データの取得に失敗しました。');
+        }
+    }
+
+    function resetAllSeats() {
+        rows1F.forEach(row => {
+            const range = get1FRange(row);
+            resetBlock('1F', row, range.left);
+            resetBlock('1F', row, range.center);
+            resetBlock('1F', row, range.right);
+        });
+        rows2F.forEach(row => {
+            const range = get2FRange(row);
+            resetBlock('2F', row, range.left);
+            resetBlock('2F', row, range.center);
+            resetBlock('2F', row, range.right);
+        });
+        
+        // カウントもリセット
+        document.getElementById('count-aramaza').textContent = '0/0';
+        document.getElementById('count-wakakoma').textContent = '0/0';
+        document.getElementById('count-tanpopo').textContent = '0/0';
+        document.getElementById('count-hanadaiko').textContent = '0/0';
+        document.getElementById('count-hall').textContent = '0/0';
+    }
+
+    function resetBlock(floor, row, rangeDef) {
+        const start = rangeDef[0];
+        const end = rangeDef[1];
+        for (let i = start; i <= end; i++) {
+            const seatId = `${floor}-${row}${i}`;
+            const seat = document.getElementById(`seat-${seatId}`);
+            if (seat && !seat.classList.examples && !seat.classList.contains('hidden-space')) {
+                seat.className = 'seat';
+            }
+        }
+    }
+
+    window.onload = renderLayout;
+</script>
+
+</body>
+</html>
