@@ -130,7 +130,7 @@
         .seat {
             width: 23px;
             height: 23px;
-            background-color: #2ecc71; /* デフォルト空席：緑 */
+            background-color: #bdc3c7; /* デフォルト空席：薄いグレー */
             color: white;
             display: flex;
             align-items: center;
@@ -142,15 +142,19 @@
         }
         
         /* 各団体の空席カラー */
-        .seat.group-aramaza { background-color: #9b59b6 !important; } /* 荒馬座：紫 */
-        .seat.group-wakakoma { background-color: #2ecc71 !important; } /* 若駒：緑 */
-        .seat.group-tanpopo  { background-color: #e67e22 !important; } /* たんぽぽ：オレンジ */
-        .seat.group-hanadaiko{ background-color: #ff69b4 !important; } /* 花太鼓：ピンク */
-        .seat.group-hall     { background-color: #3498db !important; } /* ホール用：青 */
+        .seat.group-tanpopo   { background-color: #f1c40f !important; color: #2c3e50 !important; } /* たんぽぽ：黄色（文字色を濃色にして視認性確保） */
+        .seat.group-hanadaiko { background-color: #8e44ad !important; } /* 花太鼓：紫 */
+        .seat.group-wakakoma  { background-color: #e91e63 !important; } /* 若駒：ピンク */
+        .seat.group-aramaza   { background-color: #00bcd4 !important; } /* 荒馬座：水色 */
+        .seat.group-hall      { background-color: #2ecc71 !important; } /* ホール用：緑 */
+        .seat.group-invitation{ background-color: #e74c3c !important; } /* 招待席：赤 */
+        .seat.group-special   { background-color: #e67e22 !important; } /* 特殊席：オレンジ */
+        .seat.group-other     { background-color: #795548 !important; } /* その他：ブラウン */
 
         /* 予約済みの場合は強制的に黒色 */
         .seat.reserved {
             background-color: #000000 !important; 
+            color: white !important;
         }
         .seat.hidden-space {
             background-color: transparent;
@@ -191,13 +195,16 @@
 
     <div class="screen">【 ス ク リ ー ン ・ ス テ ー ジ 方 向 】</div>
 
-    <!-- 凡例にカウンターを追加 -->
+    <!-- 凡例 -->
     <div class="legend">
-        <div class="legend-item"><div class="legend-color" style="background-color: #9b59b6;"></div><span>荒馬座 (<span id="count-aramaza">0/0</span>)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #2ecc71;"></div><span>若駒 (<span id="count-wakakoma">0/0</span>)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #e67e22;"></div><span>たんぽぽ (<span id="count-tanpopo">0/0</span>)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #ff69b4;"></div><span>花太鼓 (<span id="count-hanadaiko">0/0</span>)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #3498db;"></div><span>ホール用 (<span id="count-hall">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #f1c40f;"></div><span>たんぽぽ (<span id="count-tanpopo">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #8e44ad;"></div><span>花太鼓 (<span id="count-hanadaiko">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #e91e63;"></div><span>若駒 (<span id="count-wakakoma">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #00bcd4;"></div><span>荒馬座 (<span id="count-aramaza">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #2ecc71;"></div><span>ホール用 (<span id="count-hall">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #e74c3c;"></div><span>招待席 (<span id="count-invitation">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #e67e22;"></div><span>特殊席 (<span id="count-special">0/0</span>)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #795548;"></div><span>その他 (<span id="count-other">0/0</span>)</span></div>
         <div class="legend-item"><div class="legend-color" style="background-color: #000000;"></div><span>予約済</span></div>
         <div class="legend-item"><div class="legend-color" style="background-color: #95a5a6;"></div><span>出演者席（対象外）</span></div>
     </div>
@@ -212,7 +219,6 @@
 <script>
     // ★ここにウェブアプリのURLを貼り付けてください
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbz7KDFGwu5VU66Yrk-4y90H_rrd5gWuuIB_C7ELY7jpp8SVBlBarM1stCoyHQHwvplKuw/exec';
-
     const rows1F = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
     const balconyRows1F = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'];
 
@@ -352,7 +358,6 @@
             const response = await fetch(GAS_URL);
             const resJson = await response.json();
 
-            // 新形式（seats と summary を持つオブジェクト）または旧形式（配列）のどちらにも対応
             const data = Array.isArray(resJson) ? resJson : resJson.seats;
             const summary = !Array.isArray(resJson) ? resJson.summary : null;
 
@@ -362,7 +367,6 @@
                 let group = String(item.group || '').trim();
                 let isReserved = item.isReserved;
 
-                // 万が一 isReserved が送られてこない場合の保険
                 if (isReserved === undefined) {
                     let status = String(item.status || '').trim();
                     isReserved = (status.includes('予約') || status.includes('購入') || status.includes('済') || status === '×');
@@ -382,6 +386,12 @@
                         targetSeat.classList.add('group-hanadaiko');
                     } else if (group === 'ホール用') {
                         targetSeat.classList.add('group-hall');
+                    } else if (group === '招待席') {
+                        targetSeat.classList.add('group-invitation');
+                    } else if (group === '特殊席') {
+                        targetSeat.classList.add('group-special');
+                    } else if (group === 'その他') {
+                        targetSeat.classList.add('group-other');
                     }
 
                     // 予約済みの場合は黒く上書き
@@ -394,11 +404,14 @@
 
             // 凡例のカウント表示を更新（予約済数 / 総数）
             if (summary) {
-                if (summary['荒馬座']) document.getElementById('count-aramaza').textContent = `${summary['荒馬座'].reserved}/${summary['荒馬座'].total}`;
-                if (summary['若駒']) document.getElementById('count-wakakoma').textContent = `${summary['若駒'].reserved}/${summary['若駒'].total}`;
                 if (summary['たんぽぽ']) document.getElementById('count-tanpopo').textContent = `${summary['たんぽぽ'].reserved}/${summary['たんぽぽ'].total}`;
                 if (summary['花太鼓']) document.getElementById('count-hanadaiko').textContent = `${summary['花太鼓'].reserved}/${summary['花太鼓'].total}`;
+                if (summary['若駒']) document.getElementById('count-wakakoma').textContent = `${summary['若駒'].reserved}/${summary['若駒'].total}`;
+                if (summary['荒馬座']) document.getElementById('count-aramaza').textContent = `${summary['荒馬座'].reserved}/${summary['荒馬座'].total}`;
                 if (summary['ホール用']) document.getElementById('count-hall').textContent = `${summary['ホール用'].reserved}/${summary['ホール用'].total}`;
+                if (summary['招待席']) document.getElementById('count-invitation').textContent = `${summary['招待席'].reserved}/${summary['招待席'].total}`;
+                if (summary['特殊席']) document.getElementById('count-special').textContent = `${summary['特殊席'].reserved}/${summary['特殊席'].total}`;
+                if (summary['その他']) document.getElementById('count-other').textContent = `${summary['その他'].reserved}/${summary['その他'].total}`;
             }
 
             alert(`最新データを反映しました！（対象座席: ${updateCount}件）`);
@@ -423,11 +436,14 @@
         });
         
         // カウントもリセット
-        document.getElementById('count-aramaza').textContent = '0/0';
-        document.getElementById('count-wakakoma').textContent = '0/0';
         document.getElementById('count-tanpopo').textContent = '0/0';
         document.getElementById('count-hanadaiko').textContent = '0/0';
+        document.getElementById('count-wakakoma').textContent = '0/0';
+        document.getElementById('count-aramaza').textContent = '0/0';
         document.getElementById('count-hall').textContent = '0/0';
+        document.getElementById('count-invitation').textContent = '0/0';
+        document.getElementById('count-special').textContent = '0/0';
+        document.getElementById('count-other').textContent = '0/0';
     }
 
     function resetBlock(floor, row, rangeDef) {
@@ -436,7 +452,7 @@
         for (let i = start; i <= end; i++) {
             const seatId = `${floor}-${row}${i}`;
             const seat = document.getElementById(`seat-${seatId}`);
-            if (seat && !seat.classList.examples && !seat.classList.contains('hidden-space')) {
+            if (seat && !seat.classList.contains('hidden-space')) {
                 seat.className = 'seat';
             }
         }
